@@ -24,7 +24,7 @@ This project combines work from:
 - [Aleksandar Haber](https://www.youtube.com/@AleksandarHaber) - hardware assembly
 
 ## Resources
-- [Josh Newans YouTube Series](https://www.youtube.com/watch?v=idQb2pB-h2Q&list=PLunhqkrRNRhYAffV8JDiFOatQXuU-NnxT)
+- [Josh Newans YouTube Series](https://www.youtube.com/watch?v=OWeLUSzxMsw&list=PLunhqkrRNRhYAffV8JDiFOatQXuU-NnxT)
 - [Edouard Renard's YouTube Channel](https://www.youtube.com/@RoboticsBackEnd)
 - [Aleksandar Haber PhD YouTube](https://www.youtube.com/watch?v=RsZBxfpcLu8)
 - [ROS2 Control Documentation](https://control.ros.org/jazzy/index.html)
