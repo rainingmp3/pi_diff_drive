@@ -43,7 +43,7 @@ std::string ArduinoComms::readSerial() {
     return "SE";
 }
 
-std::stringstream ArduinoComms::setMotorValues(int val_1, int val_2) {
+std::stringstream ArduinoComms::setMotorValues(double val_1, double val_2) {
   std::stringstream ss;
   ss << "m " << val_1 << " " << val_2 << "\r";
   sendMsg(ss.str(), false);
