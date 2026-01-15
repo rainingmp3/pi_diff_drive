@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MY_ROBOT_HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
-#define MY_ROBOT_HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
+#ifndef HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
+#define HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
@@ -37,7 +37,7 @@
 #include "wheel.h"
 using hardware_interface::return_type;
 
-namespace my_robot_hardware {
+namespace hardware {
 
 class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
 public:
@@ -71,6 +71,6 @@ private:
   // rclcpp::Logger logger_;
 };
 
-} // namespace my_robot_hardware
+} // namespace hardware
 
-#endif // MY_ROBOT_HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
+#endif // HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_

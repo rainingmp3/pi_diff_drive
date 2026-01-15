@@ -1,5 +1,5 @@
-#ifndef MY_ROBOT_HARDWARE__ARDUINO_COMMS_H_
-#define MY_ROBOT_HARDWARE__ARDUINO_COMMS_H_
+#ifndef HARDWARE__ARDUINO_COMMS_H_
+#define HARDWARE__ARDUINO_COMMS_H_
 
 #include <cstring>
 #include <serial/serial.h>
@@ -30,4 +30,4 @@ public:
 private:
   serial::Serial serial_conn_; ///< Underlying serial connection
 };
-#endif // MY_ROBOT_HARDWARE__ARDUINO_COMMS_H_
+#endif // HARDWARE__ARDUINO_COMMS_H_

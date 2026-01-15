@@ -1,5 +1,5 @@
-#ifndef MY_ROBOT_HARDWARE__CONFIG_H_
-#define MY_ROBOT_HARDWARE__CONFIG_H_
+#ifndef HARDWARE__CONFIG_H_
+#define HARDWARE__CONFIG_H_
 
 #include <string>
 
@@ -13,4 +13,4 @@ struct Config {
   int enc_counts_per_rev = 20;
 };
 
-#endif // MY_ROBOT_HARDWARE__CONFIG_H_
+#endif // HARDWARE__CONFIG_H_

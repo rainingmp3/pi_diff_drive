@@ -19,7 +19,7 @@ This repository provides a **complete, tested implementation** for the hardware 
 
 ## Credits
 This project combines work from:
-- [Josh Newans](https://github.com/joshnewans) - my_robot_hardware package (hardware interface and Arduino code)
+- [Josh Newans](https://github.com/joshnewans) - hardware package (hardware interface and Arduino code)
 - [Edouard Renard](https://github.com/niryo) - all other packages (basic structure of the project, main configuration and bringup files)
 - [Aleksandar Haber](https://www.youtube.com/@AleksandarHaber) - hardware assembly
 

@@ -6,13 +6,13 @@ from launch_ros.actions import Node
 import os
 
 def generate_launch_description():
-    robot_description_path = get_package_share_path('my_robot_description')
-    robot_bringup_path = get_package_share_path('my_robot_bringup')
+    robot_description_path = get_package_share_path('description')
+    robot_bringup_path = get_package_share_path('bringup')
     
-    urdf_path = os.path.join(robot_description_path, 'urdf', 'my_robot.urdf.xacro')
+    urdf_path = os.path.join(robot_description_path, 'urdf', 'robot.urdf.xacro')
     rviz_config_path = os.path.join(robot_description_path, 'rviz', 'urdf_config.rviz')
     robot_description = ParameterValue(Command(['xacro ', urdf_path]), value_type=str)
-    robot_controllers = os.path.join(robot_bringup_path, 'config', 'my_robot_controllers.yaml')
+    robot_controllers = os.path.join(robot_bringup_path, 'config', 'controllers.yaml')
 
     robot_state_publisher_node = Node(
         package="robot_state_publisher",

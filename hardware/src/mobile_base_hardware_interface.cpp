@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "my_robot_hardware/mobile_base_hardware_interface.hpp"
+#include "hardware/mobile_base_hardware_interface.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -29,7 +29,7 @@
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace my_robot_hardware {
+namespace hardware {
 
 hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
     const hardware_interface::HardwareComponentInterfaceParams &params) {
@@ -40,9 +40,10 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
 
   // My dirty changes
   /*
-   * Here I fill values describing our system configuration,
+   * Here I fill values describing system's configuration,
    * to later use those variables in the next steps (e.g. on_configure())
    */
+
   cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
   cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
   cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
@@ -142,10 +143,10 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
   }
 
   // NOTE: So, I am not strictly following the controller lifecyhcle,
-  // that could be the culprit of all the problems. Possibly.
   arduino_.sendEmptyMsg();
   // arduino.setPidValues(9,7,0,100);
   // arduino.setPidValues(14,7,0,100);
+
   std::stringstream pids_log = arduino_.setPidValues(30, 20, 0, 100);
   set_state(cfg_.left_wheel_name + "/position", 0.0);
   set_state(cfg_.right_wheel_name + "/position", 0.0);
@@ -205,8 +206,7 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type
-my_robot_hardware::MobileBaseHardwareInterface::write(
+hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
     const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) {
 
   l_wheel_.cmd = get_command(cfg_.left_wheel_name + "/" + "velocity");
@@ -221,8 +221,8 @@ my_robot_hardware::MobileBaseHardwareInterface::write(
   RCLCPP_INFO(get_logger(), "!!motor values are: %s", motor_log.str().c_str());
   return hardware_interface::return_type::OK;
 }
-} // namespace my_robot_hardware
+} // namespace hardware
 
 #include "pluginlib/class_list_macros.hpp"
-PLUGINLIB_EXPORT_CLASS(my_robot_hardware::MobileBaseHardwareInterface,
+PLUGINLIB_EXPORT_CLASS(hardware::MobileBaseHardwareInterface,
                        hardware_interface::SystemInterface)

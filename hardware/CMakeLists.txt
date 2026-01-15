@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(my_robot_hardware)
+project(hardware)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -34,7 +34,7 @@ ament_target_dependencies(
   serial
 )
 
-pluginlib_export_plugin_description_file(hardware_interface my_robot_hardware_interface.xml)
+pluginlib_export_plugin_description_file(hardware_interface hardware_interface.xml)
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -50,7 +50,7 @@ install(
 )
 
 install(
-  FILES my_robot_hardware_interface.xml
+  FILES hardware_interface.xml
   DESTINATION share/${PROJECT_NAME}
 )
 

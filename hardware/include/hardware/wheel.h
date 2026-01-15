@@ -1,5 +1,5 @@
-#ifndef MY_ROBOT_HARDWARE__WHEEL_H_
-#define MY_ROBOT_HARDWARE__WHEEL_H_
+#ifndef HARDWARE__WHEEL_H_
+#define HARDWARE__WHEEL_H_
 
 #include <string>
 
@@ -23,4 +23,4 @@ public:
   double calcEncAngle();
 };
 
-#endif // MY_ROBOT_HARDWARE__WHEEL_H_
+#endif // HARDWARE__WHEEL_H_

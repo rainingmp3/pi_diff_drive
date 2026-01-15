@@ -1,8 +1,8 @@
 <launch>
     <let name="urdf_path" 
-         value="$(find-pkg-share my_robot_description)/urdf/my_robot.urdf.xacro" />
+         value="$(find-pkg-share description)/urdf/robot.urdf.xacro" />
     <let name="rviz_config_path"
-         value="$(find-pkg-share my_robot_description)/rviz/urdf_config.rviz" />
+         value="$(find-pkg-share description)/rviz/urdf_config.rviz" />
 
     <node pkg="robot_state_publisher" exec="robot_state_publisher">
         <param name="robot_description"
@@ -10,7 +10,7 @@
     </node>
 
     <node pkg="controller_manager" exec="ros2_control_node">
-        <param from="$(find-pkg-share my_robot_bringup)/config/my_robot_controllers.yaml" />
+        <param from="$(find-pkg-share bringup)/config/controllers.yaml" />
     </node>
 
     <node pkg="controller_manager" exec="spawner" args="joint_state_broadcaster" />
