@@ -11,6 +11,10 @@ struct Config {
   int baud_rate = 57600;
   int timeout = 1000;
   int enc_counts_per_rev = 20;
+  int pid_p = 30;
+  int pid_i = 20;
+  int pid_d = 0;
+  int pid_o = 100;
 };
 
 #endif // HARDWARE__CONFIG_H_

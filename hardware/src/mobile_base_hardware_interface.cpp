@@ -53,6 +53,10 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
   cfg_.enc_counts_per_rev =
       std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
 
+  cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
+  cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
+  cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
+  cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
   // Wheels setup
   l_wheel_.setup(cfg_.left_wheel_name, cfg_.enc_counts_per_rev);
   r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
@@ -145,7 +149,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
   // NOTE: So, I am not strictly following the controller lifecyhcle,
   arduino_.sendEmptyMsg();
   // arduino.setPidValues(9,7,0,100);
-  // arduino.setPidValues(14,7,0,100);
+  // arduino_.setPidValues(14, 7, 0, 1);
 
   std::stringstream pids_log = arduino_.setPidValues(30, 20, 0, 100);
   set_state(cfg_.left_wheel_name + "/position", 0.0);
@@ -213,11 +217,11 @@ hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
 
   r_wheel_.cmd = get_command(cfg_.right_wheel_name + "/" + "velocity");
   std::stringstream motor_log = arduino_.setMotorValues(
-      l_wheel_.cmd / l_wheel_.rads_per_count / cfg_.loop_rate,
-      r_wheel_.cmd / r_wheel_.rads_per_count / cfg_.loop_rate);
+      l_wheel_.cmd / (l_wheel_.rads_per_count / 100) / cfg_.loop_rate,
+      r_wheel_.cmd / (r_wheel_.rads_per_count / 100) / cfg_.loop_rate);
 
-  RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
-              l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
+  // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
+  //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
   RCLCPP_INFO(get_logger(), "!!motor values are: %s", motor_log.str().c_str());
   return hardware_interface::return_type::OK;
 }

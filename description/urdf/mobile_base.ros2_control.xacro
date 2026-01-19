@@ -13,6 +13,10 @@
             <param name="baud_rate">115200</param>
             <param name="timeout">1000</param>
             <param name="enc_counts_per_rev">20</param>
+            <param name="pid_p">30</param>
+            <param name="pid_i">20</param>
+            <param name="pid_d">0</param>
+            <param name="pid_o">100</param>
         </hardware>
         <joint name="base_right_wheel_joint">
             <command_interface name="velocity" />
