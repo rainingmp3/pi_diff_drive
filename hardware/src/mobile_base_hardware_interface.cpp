@@ -151,7 +151,8 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
   // arduino.setPidValues(9,7,0,100);
   // arduino_.setPidValues(14, 7, 0, 1);
 
-  std::stringstream pids_log = arduino_.setPidValues(30, 20, 0, 100);
+  std::stringstream pids_log =
+      arduino_.setPidValues(cfg_.pid_p, cfg_.pid_i, cfg_.pid_d, cfg_.pid_o);
   set_state(cfg_.left_wheel_name + "/position", 0.0);
   set_state(cfg_.right_wheel_name + "/position", 0.0);
   set_state(cfg_.left_wheel_name + "/velocity", 0.0);
