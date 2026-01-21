@@ -16,18 +16,11 @@
 
 #include <chrono>
 #include <cmath>
-#include <cstddef>
-#include <iomanip>
-#include <limits>
-#include <memory>
 #include <rclcpp/logging.hpp>
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include "hardware_interface/lexical_casts.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 namespace hardware {
 
@@ -147,8 +140,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
   // arduino.setPidValues(9,7,0,100);
   // arduino_.setPidValues(14, 7, 0, 1);
 
-  std::stringstream pids_log =
-      arduino_.setPidValues(cfg_.pid_p, cfg_.pid_i, cfg_.pid_d, cfg_.pid_o);
+  arduino_.setPidValues(cfg_.pid_p, cfg_.pid_i, cfg_.pid_d, cfg_.pid_o);
   set_state(cfg_.left_wheel_name + "/position", 0.0);
   set_state(cfg_.right_wheel_name + "/position", 0.0);
   set_state(cfg_.left_wheel_name + "/velocity", 0.0);
@@ -182,9 +174,8 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
   //   return return_type::ERROR;
   // }
 
-  std::string read_log = arduino_.readSerial();
-  std::string encoder_log =
-      arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
+  // std::string read_log = arduino_.readSerial();
+  arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
 
   double pos_prev = l_wheel_.pos;
   l_wheel_.pos = l_wheel_.calcEncAngle();
@@ -201,7 +192,6 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
   set_state(cfg_.right_wheel_name + "/" + "velocity", r_wheel_.vel);
 
   // RCLCPP_INFO(get_logger(), "!!read: %s", read_log.c_str());
-  RCLCPP_INFO(get_logger(), "Encoders: %s ", encoder_log.c_str());
 
   // RCLCPP_INFO(get_logger(), "left vel %f; right vel %f", l_wheel_.vel,
   //             r_wheel_.vel);
@@ -219,13 +209,12 @@ hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
   // we set pid's by calling setPidValues which calls the c code that assigns a
   // pointer to a struct that has all the necessary pid variables and logs
 
-  std::stringstream motor_log = arduino_.setMotorValues(
+  arduino_.setMotorValues(
       l_wheel_.cmd / (l_wheel_.rads_per_count / 100) / cfg_.loop_rate,
       r_wheel_.cmd / (r_wheel_.rads_per_count / 100) / cfg_.loop_rate);
 
   // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
   //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
-  RCLCPP_INFO(get_logger(), "Motors: %s", motor_log.str().c_str());
   return hardware_interface::return_type::OK;
 }
 } // namespace hardware

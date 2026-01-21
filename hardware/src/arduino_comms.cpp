@@ -21,7 +21,7 @@ std::string ArduinoComms::sendEmptyMsg() {
   return response;
 }
 
-std::string ArduinoComms::readEncoderValues(int &val_1, int &val_2) {
+void ArduinoComms::readEncoderValues(int &val_1, int &val_2) {
   std::string response = sendMsg("e\r");
 
   std::string delimiter = " ";
@@ -31,7 +31,8 @@ std::string ArduinoComms::readEncoderValues(int &val_1, int &val_2) {
 
   val_1 = std::atoi(token_1.c_str());
   val_2 = std::atoi(token_2.c_str());
-  return response;
+
+  RCLCPP_INFO(logger_, "Encoders: %s ", response.c_str());
 }
 
 std::string ArduinoComms::readSerial() {
@@ -40,22 +41,21 @@ std::string ArduinoComms::readSerial() {
     std::string serial_message = serial_conn_.readline();
     return serial_message;
   } else
-    return "SE";
+    return "Serial is empty!";
 }
 
-std::stringstream ArduinoComms::setMotorValues(double val_1, double val_2) {
+void ArduinoComms::setMotorValues(double val_1, double val_2) {
   std::stringstream ss;
   ss << "m " << val_1 << " " << val_2 << "\r";
   sendMsg(ss.str(), false);
-  return ss;
+  RCLCPP_INFO(logger_, "Motors: %s", ss.str().c_str());
 }
 
-std::stringstream ArduinoComms::setPidValues(float k_p, float k_d, float k_i,
-                                             float k_o) {
+void ArduinoComms::setPidValues(float k_p, float k_d, float k_i, float k_o) {
   std::stringstream ss;
   ss << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
   sendMsg(ss.str());
-  return ss;
+  // RCLCPP_INFO(logger_, "PID values: %s", pids_log.str().c_str());
 }
 
 std::string ArduinoComms::sendMsg(const std::string &msg_to_send,
