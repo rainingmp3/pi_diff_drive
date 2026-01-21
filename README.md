@@ -35,6 +35,7 @@ This project combines work from:
 - [x] Differential drive control working  
 - [x] Encoder feedback integrated  
 - [x] Tested on real hardware
-- [ ] Polishing, tuning 
+- [x] Polishing 
+- [ ] Tuning 
 - [ ] Combining low level control with higher level navigation
 - [ ] Behavior trees, obstacle avoidance, and general "higher level" tasks
