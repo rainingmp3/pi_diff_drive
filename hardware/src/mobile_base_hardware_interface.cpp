@@ -38,11 +38,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // My dirty changes
-  /*
-   * Here I fill values describing system's configuration,
-   * to later use those variables in the next steps (e.g. on_configure())
-   */
+  // My specific changes
 
   cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
   cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
@@ -52,11 +48,11 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
   cfg_.timeout = std::stoi(info_.hardware_parameters["timeout"]);
   cfg_.enc_counts_per_rev =
       std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
-
   cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
   cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
   cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
   cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
+
   // Wheels setup
   l_wheel_.setup(cfg_.left_wheel_name, cfg_.enc_counts_per_rev);
   r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
@@ -70,7 +66,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
     RCLCPP_INFO(get_logger(), "Finished Configuration");
   };
 
-  // End of my dirty changes
+  // End of my specific changes
 
   for (const hardware_interface::ComponentInfo &joint : info_.joints) {
     // DiffBotSystem has exactly two states and one command interface on each
@@ -146,7 +142,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
     set_command(name, get_state(name));
   }
 
-  // NOTE: So, I am not strictly following the controller lifecyhcle,
+  // NOTE: So, I am not strictly following the controller lifecycle,
   arduino_.sendEmptyMsg();
   // arduino.setPidValues(9,7,0,100);
   // arduino_.setPidValues(14, 7, 0, 1);
@@ -158,7 +154,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
   set_state(cfg_.left_wheel_name + "/velocity", 0.0);
   set_state(cfg_.right_wheel_name + "/velocity", 0.0);
 
-  RCLCPP_INFO(get_logger(), "!!mob cppPID values: %s", pids_log.str().c_str());
+  // RCLCPP_INFO(get_logger(), "!! PID values: %s", pids_log.str().c_str());
   RCLCPP_INFO(get_logger(), "Successfully activated!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -181,9 +177,10 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
   double deltaSeconds = diff.count();
   time_ = new_time;
 
-  if (!arduino_.connected()) {
-    return return_type::ERROR;
-  }
+  // NOTE: I am gonna comment out this check as excesssive
+  // if (!arduino_.connected()) {
+  //   return return_type::ERROR;
+  // }
 
   std::string read_log = arduino_.readSerial();
   std::string encoder_log =
@@ -203,8 +200,8 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
   set_state(cfg_.right_wheel_name + "/" + "position", r_wheel_.pos);
   set_state(cfg_.right_wheel_name + "/" + "velocity", r_wheel_.vel);
 
-  RCLCPP_INFO(get_logger(), "!!read: %s", read_log.c_str());
-  RCLCPP_INFO(get_logger(), "!!enc: %s ", encoder_log.c_str());
+  // RCLCPP_INFO(get_logger(), "!!read: %s", read_log.c_str());
+  RCLCPP_INFO(get_logger(), "Encoders: %s ", encoder_log.c_str());
 
   // RCLCPP_INFO(get_logger(), "left vel %f; right vel %f", l_wheel_.vel,
   //             r_wheel_.vel);
@@ -217,13 +214,18 @@ hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
   l_wheel_.cmd = get_command(cfg_.left_wheel_name + "/" + "velocity");
 
   r_wheel_.cmd = get_command(cfg_.right_wheel_name + "/" + "velocity");
+
+  // setMotorValues here is NOT setMotorSpeeds in the c code
+  // we set pid's by calling setPidValues which calls the c code that assigns a
+  // pointer to a struct that has all the necessary pid variables and logs
+
   std::stringstream motor_log = arduino_.setMotorValues(
       l_wheel_.cmd / (l_wheel_.rads_per_count / 100) / cfg_.loop_rate,
       r_wheel_.cmd / (r_wheel_.rads_per_count / 100) / cfg_.loop_rate);
 
   // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
   //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
-  RCLCPP_INFO(get_logger(), "!!motor values are: %s", motor_log.str().c_str());
+  RCLCPP_INFO(get_logger(), "Motors: %s", motor_log.str().c_str());
   return hardware_interface::return_type::OK;
 }
 } // namespace hardware
