@@ -26,6 +26,7 @@
 // My dirty imports
 #include "arduino_comms.h"
 #include "config.h"
+#include "std_msgs/msg/string.hpp"
 #include "wheel.h"
 using hardware_interface::return_type;
 
@@ -55,6 +56,7 @@ public:
   write(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
 private:
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;
   Config cfg_;
   Wheel l_wheel_;
   Wheel r_wheel_;

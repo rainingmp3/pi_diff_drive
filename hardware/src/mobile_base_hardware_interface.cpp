@@ -115,6 +115,12 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
 
   RCLCPP_INFO(get_logger(), "Configuring ...please wait...");
 
+  debug_publisher_ = get_node()->create_publisher<std_msgs::msg::String>(
+      "/debug/hardware_interface", 10);
+
+  if (!debug_publisher_) {
+    RCLCPP_INFO(get_logger(), "Couldn't establish debug publisher");
+  }
   // reset values always when configuring hardware
   for (const auto &[name, descr] : joint_state_interfaces_) {
     set_state(name, 0.0);
@@ -212,6 +218,11 @@ hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
   arduino_.setMotorValues(
       l_wheel_.cmd / (l_wheel_.rads_per_count / 100) / cfg_.loop_rate,
       r_wheel_.cmd / (r_wheel_.rads_per_count / 100) / cfg_.loop_rate);
+
+  // Publish debug info
+  auto message = std_msgs::msg::String();
+  message.data = "Skibidi dop..";
+  debug_publisher_->publish(message);
 
   // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
   //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
