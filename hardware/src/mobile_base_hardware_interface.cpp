@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// #define DEBUG
 #include "hardware/mobile_base_hardware_interface.hpp"
 
 #include <chrono>
@@ -193,6 +192,8 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
     std::string read_log = arduino_.readSerial();
     RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
 #endif // DEBUG
+
+    // NOTE: why end with //DEBUG, what is the philosophy behind it?
     arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
 
     double pos_prev = l_wheel_.pos;

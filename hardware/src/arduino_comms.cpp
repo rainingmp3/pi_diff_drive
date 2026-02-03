@@ -32,7 +32,9 @@ void ArduinoComms::readEncoderValues(int &val_1, int &val_2) {
     val_1 = std::atoi(token_1.c_str());
     val_2 = std::atoi(token_2.c_str());
 
+#ifdef DEBUG
     RCLCPP_INFO(logger_, "Encoders: %s ", response.c_str());
+#endif
 }
 
 std::string ArduinoComms::readSerial() {
@@ -48,14 +50,18 @@ void ArduinoComms::setMotorValues(double val_1, double val_2) {
     std::stringstream ss;
     ss << "m " << val_1 << " " << val_2 << "\r";
     sendMsg(ss.str(), false);
+#ifdef DEBUG
     RCLCPP_INFO(logger_, "Motors: %s", ss.str().c_str());
+#endif // DEBUG
 }
 
 void ArduinoComms::setPidValues(float k_p, float k_d, float k_i, float k_o) {
     std::stringstream ss;
     ss << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
     sendMsg(ss.str());
+#ifdef DEBUG
     RCLCPP_INFO(logger_, "PID values: %s", ss.str().c_str());
+#endif
 }
 
 std::string ArduinoComms::sendMsg(const std::string &msg_to_send,
@@ -64,8 +70,12 @@ std::string ArduinoComms::sendMsg(const std::string &msg_to_send,
     std::string response = serial_conn_.readline();
 
     if (print_output) {
+        // #ifdef DEBUG
         // RCLCPP_INFO_STREAM(get_logger(),"Sent: " << msg_to_send);
+        // #endif
+        // #ifdef DEBUG
         // RCLCPP_INFO_STREAM(get_logger(),"Received: " << response);
+        // #endif
     }
 
     return response;
