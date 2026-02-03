@@ -13,10 +13,16 @@
             <param name="baud_rate">115200</param>
             <param name="timeout">1000</param>
             <param name="enc_counts_per_rev">20</param>
+            <!-- There is 2 PIDs: one to control motors pwm, second to navigate the path -->
             <param name="pid_p">30</param>
             <param name="pid_i">20</param>
             <param name="pid_d">0</param>
-            <param name="pid_o">100</param>
+            <param name="pid_o">1</param>
+            <!-- <param name="nav_pid_p">1</param> -->
+            <!-- <param name="nav_pid_i">0.01</param> -->
+            <!-- <param name="nav_pid_d">0.04</param> -->
+            <!-- <param name="nav_max_windup">20</param> -->
+            <!-- <param name="nav_max_input">255</param> -->
         </hardware>
         <joint name="base_right_wheel_joint">
             <command_interface name="velocity" />
