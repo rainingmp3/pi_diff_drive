@@ -22,6 +22,7 @@ add_library(
   src/mobile_base_hardware_interface.cpp
   src/wheel.cpp  
   src/arduino_comms.cpp
+  src/pid.cpp
 )
 
 ament_target_dependencies(
