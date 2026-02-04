@@ -18,11 +18,16 @@
             <param name="pid_i">20</param>
             <param name="pid_d">0</param>
             <param name="pid_o">1</param>
-            <!-- <param name="nav_pid_p">1</param> -->
-            <!-- <param name="nav_pid_i">0.01</param> -->
-            <!-- <param name="nav_pid_d">0.04</param> -->
-            <!-- <param name="nav_max_windup">20</param> -->
-            <!-- <param name="nav_max_input">255</param> -->
+            <param name="angular_pid_p">0.1</param>
+            <param name="angular_pid_i">0.01</param>
+            <param name="angular_pid_d">0.04</param>
+            <param name="angular_max_windup">2</param>
+            <param name="angular_max_input">3.14</param>
+            <param name="linear_pid_p">0.1</param>
+            <param name="linear_pid_i">0.01</param>
+            <param name="linear_pid_d">0.04</param>
+            <param name="linear_max_windup">2</param>
+            <param name="linear_max_input">1</param>
         </hardware>
         <joint name="base_right_wheel_joint">
             <command_interface name="velocity" />

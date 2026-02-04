@@ -33,6 +33,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
 
     // My specific changes
 
+    // Hardware specific imports
     cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
     cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
     cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
@@ -46,7 +47,24 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
     cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
     cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
 
-    // Wheels setup
+    // Navigation specific imports
+
+    cfg_.linear_pid_p = std::stoi(info_.hardware_parameters["linear_pid_p"]);
+    cfg_.linear_pid_i = std::stoi(info_.hardware_parameters["linear_pid_i"]);
+    cfg_.linear_pid_d = std::stoi(info_.hardware_parameters["linear_pid_d"]);
+    cfg_.linear_pid_max_windup =
+        std::stoi(info_.hardware_parameters["linear_pid_max_windup"]);
+    cfg_.linear_pid_max_input =
+        std::stoi(info_.hardware_parameters["linear_pid_max_input"]);
+
+    cfg_.angular_pid_p = std::stoi(info_.hardware_parameters["angular_pid_p"]);
+    cfg_.angular_pid_i = std::stoi(info_.hardware_parameters["angular_pid_i"]);
+    cfg_.angular_pid_d = std::stoi(info_.hardware_parameters["angular_pid_d"]);
+    cfg_.angular_pid_max_windup =
+        std::stoi(info_.hardware_parameters["angular_pid_max_windup"]);
+    cfg_.angular_pid_max_input =
+        std::stoi(info_.hardware_parameters["angular_pid_max_input"]);
+    //  Wheels setup
     l_wheel_.setup(cfg_.left_wheel_name, cfg_.enc_counts_per_rev);
     r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
 
@@ -193,7 +211,6 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
     RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
 #endif // DEBUG
 
-    // NOTE: why end with //DEBUG, what is the philosophy behind it?
     arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
 
     double pos_prev = l_wheel_.pos;

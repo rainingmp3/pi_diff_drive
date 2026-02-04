@@ -62,8 +62,8 @@ class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_cmd_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_cmd_publisher_;
-    // PIDController pid_linear_;
-    // PIDController pid_angular_;
+    PIDController pid_linear_;
+    PIDController pid_angular_;
     Config cfg_;
     Wheel l_wheel_;
     Wheel r_wheel_;
