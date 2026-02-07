@@ -2,6 +2,7 @@
 A working ROS2 Jazzy implementation for controlling a differential drive robot with encoder feedback.
 
 For C Arduino code check: https://github.com/rainingmp3/ros_arduino_bridge
+For related simulation work in Gazebo check: https://github.com/rainingmp3/differential_drive
 ## Demo
 https://github.com/user-attachments/assets/924af53b-e3f5-4206-837a-2c466155e987
 
