@@ -26,7 +26,9 @@
 // My  imports
 #include "arduino_comms.h"
 #include "config.h"
+#include "geometry_msgs/msg/twist.hpp"
 #include "pid.h"
+#include "setpoint_following.h"
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "wheel.h"
@@ -58,10 +60,18 @@ class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
     hardware_interface::return_type
     write(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
+    void publishTwist(float velocity, float angular_velocity);
+    void applyInputs();
+
   private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_cmd_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_cmd_publisher_;
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_publisher_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
+        subscription_goal;
+    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscription_odom;
     PIDController pid_linear_;
     PIDController pid_angular_;
     Config cfg_;
@@ -69,6 +79,8 @@ class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
     Wheel r_wheel_;
     ArduinoComms arduino_;
     std::chrono::time_point<std::chrono::system_clock> time_;
+    hardware::RobotGoalPosition goal_;
+    hardware::RobotTelemetry telemetry_;
 };
 
 } // namespace hardware

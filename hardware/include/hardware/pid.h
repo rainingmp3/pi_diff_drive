@@ -1,14 +1,21 @@
-#pragma once
+#ifndef HARDWARE__PID_H_
+#define HARDWARE__PID_H_
 
 class PIDController {
   public:
     PIDController();
-    void setupPID(float kp, float ki, float kd, float max_input,
-                  float max_windup);
-    float computeControl(float setpoint, float current_state, float time_step);
+    float computeControl(float setpoint, float current_state);
+    void setupPID(float kp, float ki, float kd, float time_step,
+                  float max_input, float max_windup);
 
-  private:
-    float kp_, ki_, kd_;
-    float max_windup_, max_input_;
-    float integral_error_{0.0f}, prev_error_{0.0f};
+    float kp_ = 0;
+    float ki_ = 0;
+    float kd_ = 0;
+    float time_step_ = 0;
+    float prev_state_ = 0;
+    float prev_error_ = 0;
+    float integral_error_ = 0;
+    float max_windup_ = 0;
+    float max_input_ = 0;
 };
+#endif // !HARDWARE__PID_H_
