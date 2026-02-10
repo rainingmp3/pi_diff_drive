@@ -13,6 +13,10 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(serial REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+# find_package(Eigen3 REQUIRED)
 
 include_directories(include)
 
@@ -33,6 +37,8 @@ ament_target_dependencies(
   hardware_interface
   pluginlib
   serial
+  geometry_msgs
+  nav_msgs
 )
 
 pluginlib_export_plugin_description_file(hardware_interface hardware_interface.xml)
@@ -64,6 +70,8 @@ ament_export_dependencies(
   pluginlib
   rclcpp
   rclcpp_lifecycle
+  geometry_msgs
+  nav_msgs
 )
 
 ament_package()
