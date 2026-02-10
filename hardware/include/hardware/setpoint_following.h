@@ -3,35 +3,33 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "rclcpp/rclcpp.hpp"
 #include <cmath>
 
 const float PI = 3.14159265359;
 namespace hardware {
 
 typedef struct {
-    float goal_position_x;
-    float goal_position_y;
-    float goal_position_z;
-    float goal_yaw;
+    float goal_position_x = 0;
+    float goal_position_y = 0;
+    float goal_position_z = 0;
+    float goal_yaw = 0;
 
-    float goal_qx;
-    float goal_qy;
-    float goal_qz;
-    float goal_qw;
+    float goal_qx = 0;
+    float goal_qy = 0;
+    float goal_qz = 0;
+    float goal_qw = 0;
 } RobotGoalPosition;
 
 typedef struct {
+    float position_x = 0;
+    float position_y = 0;
+    float position_z = 0;
 
-    float position_x;
-    float position_y;
-    float position_z;
-
-    float orientation_x;
-    float orientation_y;
-    float orientation_z;
-    float orientation_w;
-    float orientation_yaw;
+    float orientation_x = 0;
+    float orientation_y = 0;
+    float orientation_z = 0;
+    float orientation_w = 0;
+    float orientation_yaw = 0;
 } RobotTelemetry;
 
 inline float wrapAngle(float angle_to_wrap) {
