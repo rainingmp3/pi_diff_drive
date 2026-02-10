@@ -1,10 +1,7 @@
 #ifndef SETPOINT_FOLLOWING__H
 #define SETPOINT_FOLLOWING__H
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include <cmath>
 
+#include <cmath>
 const float PI = 3.14159265359;
 namespace hardware {
 
