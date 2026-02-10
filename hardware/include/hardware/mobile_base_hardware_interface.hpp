@@ -26,7 +26,9 @@
 // My  imports
 #include "arduino_comms.h"
 #include "config.h"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "pid.h"
 #include "setpoint_following.h"
 #include "std_msgs/msg/int32.hpp"
