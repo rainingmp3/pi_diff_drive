@@ -11,20 +11,20 @@ struct Config {
     int baud_rate = 57600;
     int timeout = 1000;
     int enc_counts_per_rev = 20;
-    int pid_p = 30;
-    int pid_i = 20;
-    int pid_d = 0;
-    int pid_o = 100;
-    int linear_pid_p = 1;
-    int linear_pid_i = 0;
-    int linear_pid_d = 0;
-    int linear_pid_max_input = 1;
-    int linear_pid_max_windup = 1;
-    int angular_pid_p = 1;
-    int angular_pid_i = 0;
-    int angular_pid_d = 0;
-    int angular_pid_max_input = 1;
-    int angular_pid_max_windup = 1;
+    float pid_p = 30;
+    float pid_i = 20;
+    float pid_d = 0;
+    float pid_o = 100;
+    float linear_pid_p = 1;
+    float linear_pid_i = 0;
+    float linear_pid_d = 0;
+    float linear_pid_max_input = 1;
+    float linear_pid_max_windup = 1;
+    float angular_pid_p = 1;
+    float angular_pid_i = 0;
+    float angular_pid_d = 0;
+    float angular_pid_max_input = 1;
+    float angular_pid_max_windup = 1;
 };
 
 #endif // HARDWARE__CONFIG_H_

@@ -14,16 +14,6 @@
 
 #include "hardware/mobile_base_hardware_interface.hpp"
 
-#include <chrono>
-#include <cmath>
-#include <rclcpp/logging.hpp>
-#include <string>
-#include <vector>
-
-#include "hardware/pid.h"
-#include "hardware/setpoint_following.h"
-#include "hardware_interface/types/hardware_interface_type_values.hpp"
-
 using namespace std::chrono_literals;
 namespace hardware {
 
@@ -50,21 +40,21 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
     cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
 
     // Navigation specific imports
-    // pid_linear_.kp_ = std::stoi(info_.hardware_parameters["linear_pid_p"]);
-    cfg_.linear_pid_i = std::stoi(info_.hardware_parameters["linear_pid_i"]);
-    cfg_.linear_pid_d = std::stoi(info_.hardware_parameters["linear_pid_d"]);
+    cfg_.linear_pid_p = std::stof(info_.hardware_parameters["linear_pid_p"]);
+    cfg_.linear_pid_i = std::stof(info_.hardware_parameters["linear_pid_i"]);
+    cfg_.linear_pid_d = std::stof(info_.hardware_parameters["linear_pid_d"]);
     cfg_.linear_pid_max_windup =
-        std::stoi(info_.hardware_parameters["linear_pid_max_windup"]);
+        std::stof(info_.hardware_parameters["linear_pid_max_windup"]);
     cfg_.linear_pid_max_input =
-        std::stoi(info_.hardware_parameters["linear_pid_max_input"]);
+        std::stof(info_.hardware_parameters["linear_pid_max_input"]);
 
-    cfg_.angular_pid_p = std::stoi(info_.hardware_parameters["angular_pid_p"]);
-    cfg_.angular_pid_i = std::stoi(info_.hardware_parameters["angular_pid_i"]);
-    cfg_.angular_pid_d = std::stoi(info_.hardware_parameters["angular_pid_d"]);
+    cfg_.angular_pid_p = std::stof(info_.hardware_parameters["angular_pid_p"]);
+    cfg_.angular_pid_i = std::stof(info_.hardware_parameters["angular_pid_i"]);
+    cfg_.angular_pid_d = std::stof(info_.hardware_parameters["angular_pid_d"]);
     cfg_.angular_pid_max_windup =
-        std::stoi(info_.hardware_parameters["angular_pid_max_windup"]);
+        std::stof(info_.hardware_parameters["angular_pid_max_windup"]);
     cfg_.angular_pid_max_input =
-        std::stoi(info_.hardware_parameters["angular_pid_max_input"]);
+        std::stof(info_.hardware_parameters["angular_pid_max_input"]);
 
     // PID loops setup
     pid_linear_.setupPID(cfg_.linear_pid_p, cfg_.linear_pid_i,
@@ -151,7 +141,10 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
 
     // Callback definitions
     // Goal callback, being called everytime goal point is set in Rviz
-    auto timer_callback_ = [this]() { this->applyInputs(); }; // Subsciber part
+    auto timer_callback_ = [this]() {
+        this->applyInputs();
+        RCLCPP_INFO(get_logger(), "Applying the inputs");
+    }; // Subsciber part
     auto goal_callback_ =
         [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
             // Extracting goal position and heading information
@@ -163,6 +156,12 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
             goal_.goal_yaw =
                 atan2(goal_.goal_position_y - telemetry_.position_y,
                       goal_.goal_position_x - telemetry_.position_x);
+#ifdef DEBUG
+            RCLCPP_INFO(get_logger(), "Setting the goal");
+            RCLCPP_INFO(get_logger(), "the goal is %f, %f, %f, %f",
+                        goal_.goal_position_x, goal_.goal_position_y,
+                        goal_.goal_position_z, goal_.goal_yaw);
+#endif
         };
 
     // Extracting odometry informaton on position and orientation via dead
@@ -188,8 +187,9 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
         "/debug/left_cmd", 10);
     right_cmd_publisher_ = get_node()->create_publisher<std_msgs::msg::Int32>(
         "/debug/right_cmd", 10);
-    twist_publisher_ = get_node()->create_publisher<geometry_msgs::msg::Twist>(
-        "/diff_drive_controller/cmd_vel", 10);
+    twist_publisher_ =
+        get_node()->create_publisher<geometry_msgs::msg::TwistStamped>(
+            "/diff_drive_controller/cmd_vel", 10);
     auto timer_timeout = std::chrono::duration<double>(1.0 / cfg_.loop_rate);
     timer_ = get_node()->create_wall_timer(timer_timeout, timer_callback_);
     subscription_goal =
@@ -198,7 +198,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
 
     subscription_odom =
         get_node()->create_subscription<nav_msgs::msg::Odometry>(
-            "/diff_drive_controller/odometry", 10, odom_callback_);
+            "/diff_drive_controller/odom", 10, odom_callback_);
 
     //
     if (!debug_publisher_) {
@@ -260,8 +260,8 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
     // }
 
 #ifdef DEBUG
-    std::string read_log = arduino_.readSerial();
-    RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
+    // std::string read_log = arduino_.readSerial();
+    // RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
 #endif // DEBUG
 
     arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
@@ -324,9 +324,9 @@ void MobileBaseHardwareInterface::publishTwist(float velocity,
                                                float angular_velocity)
 // Publishes linear and angular velocity
 {
-    auto vel_msg = geometry_msgs::msg::Twist();
-    vel_msg.linear.x = velocity;
-    vel_msg.angular.z = angular_velocity;
+    auto vel_msg = geometry_msgs::msg::TwistStamped();
+    vel_msg.twist.linear.x = velocity;
+    vel_msg.twist.angular.z = angular_velocity;
     twist_publisher_->publish(vel_msg);
 }
 
@@ -337,7 +337,10 @@ void MobileBaseHardwareInterface::applyInputs()
                                                     telemetry_.position_x);
     float angular_input = pid_angular_.computeControl(
         wrapAngle(goal_.goal_yaw), telemetry_.orientation_yaw);
-    // RCLCPP_INFO(get_logger(), "lin/ang_inp: %f/%f", linear_input,
+#ifdef DEBUG
+    RCLCPP_INFO(get_logger(), "lin/ang_inp: %f/%f", linear_input,
+                angular_input);
+#endif
     this->publishTwist(linear_input, angular_input);
 }
 } // namespace hardware

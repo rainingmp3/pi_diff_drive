@@ -1,5 +1,4 @@
 #include "hardware/pid.h"
-#include <algorithm>
 
 void PIDController::setupPID(float kp, float ki, float kd, float time_step,
                              float max_input, float max_windup) {
@@ -22,5 +21,9 @@ float PIDController::computeControl(float setpoint, float current_state) {
     control_input = std::clamp(control_input, -max_input_, max_input_);
     prev_error_ = error;
     prev_state_ = current_state;
+    // #ifdef PID_DEBUG
+    RCLCPP_INFO(logger_, "error: %f, kp:%f, max_input:%f, control_input:%f",
+                error, kp_, max_input_, control_input);
+    // #endif
     return control_input;
 }

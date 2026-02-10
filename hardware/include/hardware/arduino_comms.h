@@ -2,9 +2,12 @@
 #define HARDWARE__ARDUINO_COMMS_H_
 
 #include "defines.h"
+#include <cstdlib>
 #include <cstring>
 #include <rclcpp/logger.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <serial/serial.h>
+#include <sstream>
 
 class ArduinoComms {
 

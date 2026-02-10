@@ -26,7 +26,7 @@
 // My  imports
 #include "arduino_comms.h"
 #include "config.h"
-#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "pid.h"
 #include "setpoint_following.h"
 #include "std_msgs/msg/int32.hpp"
@@ -67,7 +67,8 @@ class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_cmd_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_cmd_publisher_;
-    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_publisher_;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
+        twist_publisher_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
         subscription_goal;
     rclcpp::TimerBase::SharedPtr timer_;
