@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <ros2_control name="MobileBase" type="system">
+    <ros2_control name="Robot" type="system">
         <hardware>
             <!-- <plugin>mock_components/GenericSystem</plugin>
             <param name="calculate_dynamics">true</param> -->
-            <plugin>hardware/MobileBaseHardwareInterface</plugin>
-            <param name="left_wheel_name">base_right_wheel_joint</param>
-            <param name="right_wheel_name">base_left_wheel_joint</param>
-            <param name="loop_rate">5</param>
+            <plugin>hardware/RobotHardwareInterface</plugin>
+            <param name="left_wheel_name">left_wheel_joint</param>
+            <param name="right_wheel_name">right_wheel_joint</param>
+            <param name="loop_rate">30</param>
             <param name="port">/dev/ttyUSB0</param>
             <param name="baud_rate">115200</param>
             <param name="timeout">1000</param>
@@ -19,22 +19,22 @@
             <param name="pid_d">0</param>
             <param name="pid_o">1</param>
             <param name="angular_pid_p">0.1</param>
-            <param name="angular_pid_i">0.01</param>
+            <param name="angular_pid_i">0.04</param>
             <param name="angular_pid_d">0.02</param>
-            <param name="angular_pid_max_windup">0.1</param>
+            <param name="angular_pid_max_windup">0.5</param>
             <param name="angular_pid_max_input">0.3</param>
-            <param name="linear_pid_p">0.4</param>
-            <param name="linear_pid_i">0.02</param>
+            <param name="linear_pid_p">0.6</param>
+            <param name="linear_pid_i">0.04</param>
             <param name="linear_pid_d">0.01</param>
-            <param name="linear_pid_max_windup">0.2</param>
-            <param name="linear_pid_max_input">1</param>
+            <param name="linear_pid_max_windup">2</param>
+            <param name="linear_pid_max_input">1.6</param>
         </hardware>
-        <joint name="base_right_wheel_joint">
+        <joint name="right_wheel_joint">
             <command_interface name="velocity" />
             <state_interface name="position" />
             <state_interface name="velocity" />
         </joint>
-        <joint name="base_left_wheel_joint">
+        <joint name="left_wheel_joint">
             <command_interface name="velocity" />
             <state_interface name="position" />
             <state_interface name="velocity" />

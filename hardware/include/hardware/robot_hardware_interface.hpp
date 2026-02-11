@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
-#define HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
+#ifndef ROBOT__HARDWARE_INTERFACE_HPP_
+#define ROBOT__HARDWARE_INTERFACE_HPP_
 
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
@@ -39,9 +39,9 @@ using hardware_interface::return_type;
 
 namespace hardware {
 
-class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
+class RobotHardwareInterface : public hardware_interface::SystemInterface {
   public:
-    RCLCPP_SHARED_PTR_DEFINITIONS(MobileBaseHardwareInterface)
+    RCLCPP_SHARED_PTR_DEFINITIONS(RobotHardwareInterface)
 
     hardware_interface::CallbackReturn
     on_init(const hardware_interface::HardwareComponentInterfaceParams &params)
@@ -88,4 +88,4 @@ class MobileBaseHardwareInterface : public hardware_interface::SystemInterface {
 
 } // namespace hardware
 
-#endif // HARDWARE__MOBILE_BASE_HARDWARE_INTERFACE_HPP_
+#endif // ROBOT__HARDWARE_INTERFACE_HPP_

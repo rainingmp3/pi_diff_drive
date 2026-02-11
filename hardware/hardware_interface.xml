@@ -1,9 +1,9 @@
 <library path="hardware">
-    <class name="hardware/MobileBaseHardwareInterface"
-        type="hardware::MobileBaseHardwareInterface"
+    <class name="hardware/RobotHardwareInterface"
+        type="hardware::RobotHardwareInterface"
         base_class_type="hardware_interface::SystemInterface">
         <description>
-            Hardware interface for a mobile base with 2 Dynamixel motors
+            Hardware interface for differenrially driven mobile robot
         </description>
     </class>
 </library>

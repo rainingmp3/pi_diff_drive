@@ -4,7 +4,7 @@
   <name>description</name>
   <version>0.0.0</version>
   <description>Robot description files</description>
-  <maintainer email="edouard.renard.pro@gmail.com">ed</maintainer>
+  <maintainer email="ioankotanov@gmail.com">Ivane Kotanov</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

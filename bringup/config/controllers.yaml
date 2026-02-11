@@ -10,20 +10,19 @@ controller_manager:
 
 diff_drive_controller:
   ros__parameters:
-    left_wheel_names: ["base_left_wheel_joint"]
-    right_wheel_names: ["base_right_wheel_joint"]
+    left_wheel_names: ["left_wheel_joint"]
+    right_wheel_names: ["right_wheel_joint"]
 
     wheel_separation: 0.127
     wheel_radius: 0.033
 
     odom_frame_id: "odom"
-    base_frame_id: "base_footprint"
-
+    base_frame_id: "base_link"
     pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
 
     enable_odom_tf: true
-    publish_rate: 2.0
+    publish_rate: 50.0
 
     linear.x.max_velocity: 1.0
     linear.x.min_velocity: -1.0

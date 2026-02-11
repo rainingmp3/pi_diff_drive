@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "hardware/mobile_base_hardware_interface.hpp"
+#include "hardware/robot_hardware_interface.hpp"
 
 using namespace std::chrono_literals;
 namespace hardware {
 
-hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
+hardware_interface::CallbackReturn RobotHardwareInterface::on_init(
     const hardware_interface::HardwareComponentInterfaceParams &params) {
     if (hardware_interface::SystemInterface::on_init(params) !=
         hardware_interface::CallbackReturn::SUCCESS) {
@@ -134,7 +134,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_init(
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
+hardware_interface::CallbackReturn RobotHardwareInterface::on_configure(
     const rclcpp_lifecycle::State & /*previous_state*/) {
 
     RCLCPP_INFO(get_logger(), "Configuring ...please wait...");
@@ -216,7 +216,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_configure(
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
+hardware_interface::CallbackReturn RobotHardwareInterface::on_activate(
     const rclcpp_lifecycle::State & /*previous_state*/) {
 
     // command and state should be equal when starting
@@ -241,7 +241,7 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_activate(
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_deactivate(
+hardware_interface::CallbackReturn RobotHardwareInterface::on_deactivate(
     const rclcpp_lifecycle::State & /*previous_state*/) {
 
     RCLCPP_INFO(get_logger(), "Successfully deactivated!(NOTHING)");
@@ -250,8 +250,8 @@ hardware_interface::CallbackReturn MobileBaseHardwareInterface::on_deactivate(
 }
 
 hardware_interface::return_type
-MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
-                                  const rclcpp::Duration &period) {
+RobotHardwareInterface::read(const rclcpp::Time & /*time*/,
+                             const rclcpp::Duration &period) {
     // Calculate time delta
     auto new_time = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = new_time - time_;
@@ -285,8 +285,9 @@ MobileBaseHardwareInterface::read(const rclcpp::Time & /*time*/,
     return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
-    const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) {
+hardware_interface::return_type
+hardware::RobotHardwareInterface::write(const rclcpp::Time & /*time*/,
+                                        const rclcpp::Duration & /*period*/) {
 
     l_wheel_.cmd = get_command(cfg_.left_wheel_name + "/" + "velocity");
 
@@ -320,8 +321,8 @@ hardware_interface::return_type hardware::MobileBaseHardwareInterface::write(
     return hardware_interface::return_type::OK;
 }
 
-void MobileBaseHardwareInterface::publishTwist(float velocity,
-                                               float angular_velocity)
+void RobotHardwareInterface::publishTwist(float velocity,
+                                          float angular_velocity)
 // Publishes linear and angular velocity
 {
     auto vel_msg = geometry_msgs::msg::TwistStamped();
@@ -330,7 +331,7 @@ void MobileBaseHardwareInterface::publishTwist(float velocity,
     twist_publisher_->publish(vel_msg);
 }
 
-void MobileBaseHardwareInterface::applyInputs()
+void RobotHardwareInterface::applyInputs()
 // Parses velocity commands to publishTwist functions
 {
     float linear_input = pid_linear_.computeControl(goal_.goal_position_x,
@@ -346,5 +347,5 @@ void MobileBaseHardwareInterface::applyInputs()
 } // namespace hardware
 
 #include "pluginlib/class_list_macros.hpp"
-PLUGINLIB_EXPORT_CLASS(hardware::MobileBaseHardwareInterface,
+PLUGINLIB_EXPORT_CLASS(hardware::RobotHardwareInterface,
                        hardware_interface::SystemInterface)
