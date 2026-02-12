@@ -1,7 +1,6 @@
 #ifndef HARDWARE__ARDUINO_COMMS_H_
 #define HARDWARE__ARDUINO_COMMS_H_
 
-#include "defines.h"
 #include <cstdlib>
 #include <cstring>
 #include <rclcpp/logging.hpp>

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "hardware/robot_hardware_interface.hpp"
+#include "hardware/config.h"
 
 using namespace std::chrono_literals;
 namespace hardware {
@@ -24,39 +25,12 @@ hardware_interface::CallbackReturn RobotHardwareInterface::on_init(
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    // My specific changes
-    // Hardware specific imports
-    cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
-    cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
-    cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
-    cfg_.port = (info_.hardware_parameters["port"]);
-    cfg_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
-    cfg_.timeout = std::stoi(info_.hardware_parameters["timeout"]);
-    cfg_.enc_counts_per_rev =
-        std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
-    cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
-    cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
-    cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
-    cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
+    // import and apply variables from robot.ros2_control.xacro
+    importConfigVariables();
 
-    // Navigation specific imports
-    cfg_.linear_pid_p = std::stof(info_.hardware_parameters["linear_pid_p"]);
-    cfg_.linear_pid_i = std::stof(info_.hardware_parameters["linear_pid_i"]);
-    cfg_.linear_pid_d = std::stof(info_.hardware_parameters["linear_pid_d"]);
-    cfg_.linear_pid_max_windup =
-        std::stof(info_.hardware_parameters["linear_pid_max_windup"]);
-    cfg_.linear_pid_max_input =
-        std::stof(info_.hardware_parameters["linear_pid_max_input"]);
-
-    cfg_.angular_pid_p = std::stof(info_.hardware_parameters["angular_pid_p"]);
-    cfg_.angular_pid_i = std::stof(info_.hardware_parameters["angular_pid_i"]);
-    cfg_.angular_pid_d = std::stof(info_.hardware_parameters["angular_pid_d"]);
-    cfg_.angular_pid_max_windup =
-        std::stof(info_.hardware_parameters["angular_pid_max_windup"]);
-    cfg_.angular_pid_max_input =
-        std::stof(info_.hardware_parameters["angular_pid_max_input"]);
-
-    // PID loops setup
+    //  Higher-level navigation PID loops variables setup
+    //  NOTE: this is not the PID that internally drive motors to desired ticks
+    //  per loop
     pid_linear_.setupPID(cfg_.linear_pid_p, cfg_.linear_pid_i,
                          cfg_.linear_pid_d, 1 / cfg_.loop_rate,
                          cfg_.linear_pid_max_input, cfg_.linear_pid_max_windup);
@@ -64,11 +38,11 @@ hardware_interface::CallbackReturn RobotHardwareInterface::on_init(
                           cfg_.angular_pid_d, 1 / cfg_.loop_rate,
                           cfg_.angular_pid_max_input,
                           cfg_.angular_pid_max_windup);
-    //  Wheels setup
+    //  Wheels class setup
     l_wheel_.setup(cfg_.left_wheel_name, cfg_.enc_counts_per_rev);
     r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
 
-    // Arduino communication setup
+    // Arduino communication pipeline setup
     arduino_.setup(cfg_.port, cfg_.baud_rate, cfg_.timeout);
     if (!arduino_.connected()) {
         RCLCPP_INFO(get_logger(), "No connection to start with");
@@ -138,13 +112,159 @@ hardware_interface::CallbackReturn RobotHardwareInterface::on_configure(
     const rclcpp_lifecycle::State & /*previous_state*/) {
 
     RCLCPP_INFO(get_logger(), "Configuring ...please wait...");
+    createPublishersAndSubscribers();
 
-    // Callback definitions
-    // Goal callback, being called everytime goal point is set in Rviz
-    auto timer_callback_ = [this]() {
-        this->applyInputs();
-        RCLCPP_INFO(get_logger(), "Applying the inputs");
-    }; // Subsciber part
+    // reset values always when configuring hardware
+    for (const auto &[name, descr] : joint_state_interfaces_) {
+        set_state(name, 0.0);
+    }
+    for (const auto &[name, descr] : joint_command_interfaces_) {
+        set_command(name, 0.0);
+    }
+    RCLCPP_INFO(get_logger(), "Successfully configured!");
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn RobotHardwareInterface::on_activate(
+    const rclcpp_lifecycle::State & /*previous_state*/) {
+
+    // command and state should be equal when starting
+    for (const auto &[name, descr] : joint_command_interfaces_) {
+        set_command(name, get_state(name));
+    }
+
+    // NOTE:  I am not strictly following the controller lifecycle, with this
+    arduino_.sendEmptyMsg();
+    /* Set internall motors PID, the reason its in on_activate() is to ensure
+     that these variables below are already imported and set by the time of
+     their applying, though it could be just at the end of on_configure()
+    */
+    arduino_.setPidValues(cfg_.pid_p, cfg_.pid_i, cfg_.pid_d, cfg_.pid_o);
+
+    // Setting state variables, they will be later published and taken care of
+    // internally by controller_manger
+    set_state(cfg_.left_wheel_name + "/position", 0.0);
+    set_state(cfg_.right_wheel_name + "/position", 0.0);
+    set_state(cfg_.left_wheel_name + "/velocity", 0.0);
+    set_state(cfg_.right_wheel_name + "/velocity", 0.0);
+
+    RCLCPP_INFO(get_logger(), "Successfully activated!");
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn RobotHardwareInterface::on_deactivate(
+    const rclcpp_lifecycle::State & /*previous_state*/) {
+
+    RCLCPP_INFO(get_logger(), "Successfully deactivated!(NOTHING)");
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::return_type
+RobotHardwareInterface::read(const rclcpp::Time & /*time*/,
+                             const rclcpp::Duration &period) {
+    // Calculate time delta
+    auto new_time = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff = new_time - time_;
+    double deltaSeconds = diff.count();
+    time_ = new_time;
+    // std::string read_log = arduino_.readSerial();
+    // RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
+
+    // Read encoder values, calculate angle and angular velocity
+    arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
+    double pos_prev = l_wheel_.pos;
+    l_wheel_.pos = l_wheel_.calcEncAngle();
+    l_wheel_.vel = (l_wheel_.pos - pos_prev) / deltaSeconds;
+
+    pos_prev = r_wheel_.pos;
+    r_wheel_.pos = r_wheel_.calcEncAngle();
+    r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
+
+    // Tying state variables to controller_manger
+    set_state(cfg_.left_wheel_name + "/" + "position", l_wheel_.pos);
+    set_state(cfg_.left_wheel_name + "/" + "velocity", l_wheel_.vel);
+    set_state(cfg_.right_wheel_name + "/" + "position", r_wheel_.pos);
+    set_state(cfg_.right_wheel_name + "/" + "velocity", r_wheel_.vel);
+
+    // RCLCPP_INFO(get_logger(), "left vel %f; right vel %f", l_wheel_.vel,
+    //             r_wheel_.vel);
+    return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type
+hardware::RobotHardwareInterface::write(const rclcpp::Time & /*time*/,
+                                        const rclcpp::Duration & /*period*/) {
+    // Control type (velocity, position or both) and joints' names are all
+    // defined in  controllers.yaml
+    // controller manager exposes commands via the following get_command()
+    l_wheel_.cmd = get_command(cfg_.left_wheel_name + "/" + "velocity");
+    r_wheel_.cmd = get_command(cfg_.right_wheel_name + "/" + "velocity");
+
+    // the units for these commands are *encoder ticks per single loop*
+    float left_cmd = l_wheel_.cmd / (l_wheel_.rads_per_count) / cfg_.loop_rate;
+    float right_cmd = r_wheel_.cmd / (r_wheel_.rads_per_count) / cfg_.loop_rate;
+
+    // Send commands to motors
+    arduino_.setMotorValues(left_cmd, right_cmd);
+
+    // Command new velocity for next iteration
+    commandVelocity();
+
+    // Publish debug info
+    // auto message = std_msgs::msg::String();
+    // message.data = "Meow :3";
+    // debug_publisher_->publish(message);
+
+    // Publish left pwm info
+    auto left_cmd_log = std_msgs::msg::Int32();
+    left_cmd_log.data = left_cmd;
+    left_cmd_publisher_->publish(left_cmd_log);
+
+    // Publish right pwm info
+    auto right_cmd_log = std_msgs::msg::Int32();
+    right_cmd_log.data = right_cmd;
+    right_cmd_publisher_->publish(right_cmd_log);
+
+    // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
+    //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
+    return hardware_interface::return_type::OK;
+}
+
+void RobotHardwareInterface::publishTwist(float velocity,
+                                          float angular_velocity)
+// Publishes linear and angular velocity
+{
+    auto vel_msg = geometry_msgs::msg::TwistStamped();
+    vel_msg.twist.linear.x = velocity;
+    vel_msg.twist.angular.z = angular_velocity;
+    twist_publisher_->publish(vel_msg);
+}
+
+void RobotHardwareInterface::commandVelocity()
+// Parses velocity commands to publishTwist functions
+{
+    /*There are two docoupled pid loops that conrtribute to Higher-level
+    navigation:
+    Linear error (module distance to the goal) &
+    Angular error (angel from -90 to 90 degrees (where 0 is along thje main axis
+    of symmetry of the bot, from caster to the back), where if the robot exceeds
+    this values, it gets wrapped and it drives backways*/
+
+    float linear_input = pid_linear_.computeControl(goal_.goal_position_x,
+                                                    telemetry_.position_x);
+    float angular_input = pid_angular_.computeControl(
+        wrapAngle(goal_.goal_yaw), telemetry_.orientation_yaw);
+    // TODO: publish debug
+    RCLCPP_INFO(get_logger(), "lin/ang_inp: %f/%f", linear_input,
+                angular_input);
+    this->publishTwist(linear_input, angular_input);
+}
+
+void RobotHardwareInterface::createPublishersAndSubscribers() {
+
     auto goal_callback_ =
         [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
             // Extracting goal position and heading information
@@ -156,12 +276,10 @@ hardware_interface::CallbackReturn RobotHardwareInterface::on_configure(
             goal_.goal_yaw =
                 atan2(goal_.goal_position_y - telemetry_.position_y,
                       goal_.goal_position_x - telemetry_.position_x);
-#ifdef DEBUG
             RCLCPP_INFO(get_logger(), "Setting the goal");
-            RCLCPP_INFO(get_logger(), "the goal is %f, %f, %f, %f",
+            RCLCPP_INFO(get_logger(), "The goal is %f, %f, %f, %f",
                         goal_.goal_position_x, goal_.goal_position_y,
                         goal_.goal_position_z, goal_.goal_yaw);
-#endif
         };
 
     // Extracting odometry informaton on position and orientation via dead
@@ -190,8 +308,8 @@ hardware_interface::CallbackReturn RobotHardwareInterface::on_configure(
     twist_publisher_ =
         get_node()->create_publisher<geometry_msgs::msg::TwistStamped>(
             "/diff_drive_controller/cmd_vel", 10);
-    auto timer_timeout = std::chrono::duration<double>(1.0 / cfg_.loop_rate);
-    timer_ = get_node()->create_wall_timer(timer_timeout, timer_callback_);
+    // auto timer_timeout = std::chrono::duration<double>(1.0 / cfg_.loop_rate);
+    // timer_ = get_node()->create_wall_timer(timer_timeout, timer_callback_);
     subscription_goal =
         get_node()->create_subscription<geometry_msgs::msg::PoseStamped>(
             "/goal_pose", 10, goal_callback_);
@@ -199,150 +317,40 @@ hardware_interface::CallbackReturn RobotHardwareInterface::on_configure(
     subscription_odom =
         get_node()->create_subscription<nav_msgs::msg::Odometry>(
             "/diff_drive_controller/odom", 10, odom_callback_);
+};
 
-    //
-    if (!debug_publisher_) {
-        RCLCPP_INFO(get_logger(), "Couldn't establish debug publisher");
-    }
-    // reset values always when configuring hardware
-    for (const auto &[name, descr] : joint_state_interfaces_) {
-        set_state(name, 0.0);
-    }
-    for (const auto &[name, descr] : joint_command_interfaces_) {
-        set_command(name, 0.0);
-    }
-    RCLCPP_INFO(get_logger(), "Successfully configured!");
+void RobotHardwareInterface::importConfigVariables() {
+    // My specific changes
+    // Hardware specific imports
+    cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
+    cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
+    cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
+    cfg_.port = (info_.hardware_parameters["port"]);
+    cfg_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
+    cfg_.timeout = std::stoi(info_.hardware_parameters["timeout"]);
+    cfg_.enc_counts_per_rev =
+        std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
+    cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
+    cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
+    cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
+    cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
 
-    return hardware_interface::CallbackReturn::SUCCESS;
-}
+    // Navigation pids specific imports
+    cfg_.linear_pid_p = std::stof(info_.hardware_parameters["linear_pid_p"]);
+    cfg_.linear_pid_i = std::stof(info_.hardware_parameters["linear_pid_i"]);
+    cfg_.linear_pid_d = std::stof(info_.hardware_parameters["linear_pid_d"]);
+    cfg_.linear_pid_max_windup =
+        std::stof(info_.hardware_parameters["linear_pid_max_windup"]);
+    cfg_.linear_pid_max_input =
+        std::stof(info_.hardware_parameters["linear_pid_max_input"]);
 
-hardware_interface::CallbackReturn RobotHardwareInterface::on_activate(
-    const rclcpp_lifecycle::State & /*previous_state*/) {
-
-    // command and state should be equal when starting
-    for (const auto &[name, descr] : joint_command_interfaces_) {
-        set_command(name, get_state(name));
-    }
-
-    // NOTE: So, I am not strictly following the controller lifecycle,
-    arduino_.sendEmptyMsg();
-    // arduino_.setPidValues(14, 7, 0, 1);
-
-    arduino_.setPidValues(cfg_.pid_p, cfg_.pid_i, cfg_.pid_d, cfg_.pid_o);
-    set_state(cfg_.left_wheel_name + "/position", 0.0);
-    set_state(cfg_.right_wheel_name + "/position", 0.0);
-    set_state(cfg_.left_wheel_name + "/velocity", 0.0);
-    set_state(cfg_.right_wheel_name + "/velocity", 0.0);
-
-    // RCLCPP_INFO(get_logger(), "!! PID values: %s",
-    // pids_log.str().c_str());
-    RCLCPP_INFO(get_logger(), "Successfully activated!");
-
-    return hardware_interface::CallbackReturn::SUCCESS;
-}
-
-hardware_interface::CallbackReturn RobotHardwareInterface::on_deactivate(
-    const rclcpp_lifecycle::State & /*previous_state*/) {
-
-    RCLCPP_INFO(get_logger(), "Successfully deactivated!(NOTHING)");
-
-    return hardware_interface::CallbackReturn::SUCCESS;
-}
-
-hardware_interface::return_type
-RobotHardwareInterface::read(const rclcpp::Time & /*time*/,
-                             const rclcpp::Duration &period) {
-    // Calculate time delta
-    auto new_time = std::chrono::system_clock::now();
-    std::chrono::duration<double> diff = new_time - time_;
-    double deltaSeconds = diff.count();
-    time_ = new_time;
-    // }
-
-#ifdef DEBUG
-    // std::string read_log = arduino_.readSerial();
-    // RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
-#endif // DEBUG
-
-    arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
-
-    double pos_prev = l_wheel_.pos;
-    l_wheel_.pos = l_wheel_.calcEncAngle();
-    l_wheel_.vel = (l_wheel_.pos - pos_prev) / deltaSeconds;
-
-    pos_prev = r_wheel_.pos;
-    r_wheel_.pos = r_wheel_.calcEncAngle();
-    r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
-
-    // Tying state variables to controller_manger
-    set_state(cfg_.left_wheel_name + "/" + "position", l_wheel_.pos);
-    set_state(cfg_.left_wheel_name + "/" + "velocity", l_wheel_.vel);
-    set_state(cfg_.right_wheel_name + "/" + "position", r_wheel_.pos);
-    set_state(cfg_.right_wheel_name + "/" + "velocity", r_wheel_.vel);
-
-    // RCLCPP_INFO(get_logger(), "left vel %f; right vel %f", l_wheel_.vel,
-    //             r_wheel_.vel);
-    return hardware_interface::return_type::OK;
-}
-
-hardware_interface::return_type
-hardware::RobotHardwareInterface::write(const rclcpp::Time & /*time*/,
-                                        const rclcpp::Duration & /*period*/) {
-
-    l_wheel_.cmd = get_command(cfg_.left_wheel_name + "/" + "velocity");
-
-    r_wheel_.cmd = get_command(cfg_.right_wheel_name + "/" + "velocity");
-
-    float left_cmd_pwm =
-        l_wheel_.cmd / (l_wheel_.rads_per_count) / cfg_.loop_rate;
-
-    float right_cmd_pwm =
-        r_wheel_.cmd / (r_wheel_.rads_per_count) / cfg_.loop_rate;
-
-    arduino_.setMotorValues(left_cmd_pwm, right_cmd_pwm);
-
-    // Publish debug info
-    // auto message = std_msgs::msg::String();
-    // message.data = "Skibidi dop..";
-    // debug_publisher_->publish(message);
-
-    // Publish left pwm info
-    auto left_cmd_log = std_msgs::msg::Int32();
-    left_cmd_log.data = left_cmd_pwm;
-    left_cmd_publisher_->publish(left_cmd_log);
-
-    // Publish right pwm info
-    auto right_cmd_log = std_msgs::msg::Int32();
-    right_cmd_log.data = right_cmd_pwm;
-    right_cmd_publisher_->publish(right_cmd_log);
-
-    // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
-    //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
-    return hardware_interface::return_type::OK;
-}
-
-void RobotHardwareInterface::publishTwist(float velocity,
-                                          float angular_velocity)
-// Publishes linear and angular velocity
-{
-    auto vel_msg = geometry_msgs::msg::TwistStamped();
-    vel_msg.twist.linear.x = velocity;
-    vel_msg.twist.angular.z = angular_velocity;
-    twist_publisher_->publish(vel_msg);
-}
-
-void RobotHardwareInterface::applyInputs()
-// Parses velocity commands to publishTwist functions
-{
-    float linear_input = pid_linear_.computeControl(goal_.goal_position_x,
-                                                    telemetry_.position_x);
-    float angular_input = pid_angular_.computeControl(
-        wrapAngle(goal_.goal_yaw), telemetry_.orientation_yaw);
-#ifdef DEBUG
-    RCLCPP_INFO(get_logger(), "lin/ang_inp: %f/%f", linear_input,
-                angular_input);
-#endif
-    this->publishTwist(linear_input, angular_input);
+    cfg_.angular_pid_p = std::stof(info_.hardware_parameters["angular_pid_p"]);
+    cfg_.angular_pid_i = std::stof(info_.hardware_parameters["angular_pid_i"]);
+    cfg_.angular_pid_d = std::stof(info_.hardware_parameters["angular_pid_d"]);
+    cfg_.angular_pid_max_windup =
+        std::stof(info_.hardware_parameters["angular_pid_max_windup"]);
+    cfg_.angular_pid_max_input =
+        std::stof(info_.hardware_parameters["angular_pid_max_input"]);
 }
 } // namespace hardware
 

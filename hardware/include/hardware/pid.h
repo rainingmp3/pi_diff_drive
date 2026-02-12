@@ -21,6 +21,9 @@ class PIDController {
     float integral_error_ = 0;
     float max_windup_ = 0;
     float max_input_ = 0;
+    float error = 0;
+    float derivative_error = 0;
+    float control_input = 0;
 
   private:
     rclcpp::Logger logger_;

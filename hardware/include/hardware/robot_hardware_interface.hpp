@@ -63,7 +63,9 @@ class RobotHardwareInterface : public hardware_interface::SystemInterface {
     write(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
     void publishTwist(float velocity, float angular_velocity);
-    void applyInputs();
+    void commandVelocity();
+    void createPublishersAndSubscribers();
+    void importConfigVariables();
 
   private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;

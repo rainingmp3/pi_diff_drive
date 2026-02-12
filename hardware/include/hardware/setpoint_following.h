@@ -5,7 +5,7 @@
 const float PI = 3.14159265359;
 namespace hardware {
 
-typedef struct {
+typedef struct RobotGoalPosition {
     float goal_position_x = 0;
     float goal_position_y = 0;
     float goal_position_z = 0;
@@ -17,7 +17,7 @@ typedef struct {
     float goal_qw = 0;
 } RobotGoalPosition;
 
-typedef struct {
+typedef struct RobotTelemetry {
     float position_x = 0;
     float position_y = 0;
     float position_z = 0;
