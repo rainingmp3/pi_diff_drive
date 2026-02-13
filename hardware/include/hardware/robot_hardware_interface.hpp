@@ -26,11 +26,13 @@
 // My  imports
 #include "arduino_comms.h"
 #include "config.h"
+#include "custom_msgs/msg/pid.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "pid.h"
 #include "setpoint_following.h"
+#include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "wheel.h"
@@ -66,11 +68,17 @@ class RobotHardwareInterface : public hardware_interface::SystemInterface {
     void commandVelocity();
     void createPublishersAndSubscribers();
     void importConfigVariables();
+    void publishDebugVariables();
+    float left_cmd, right_cmd; // for debug
 
   private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_cmd_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_cmd_publisher_;
+    rclcpp::Publisher<custom_msgs::msg::Pid>::SharedPtr
+        pid_linear_debug_publisher_;
+    rclcpp::Publisher<custom_msgs::msg::Pid>::SharedPtr
+        pid_angular_debug_publisher_;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
         twist_publisher_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr

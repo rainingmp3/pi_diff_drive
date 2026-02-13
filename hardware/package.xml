@@ -15,6 +15,7 @@
   <depend>geometry_msgs</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>hardware_interface</depend>
+  <depend>custom_msgs</depend>
   <depend>pluginlib</depend>
 
   <test_depend>ament_lint_auto</test_depend>

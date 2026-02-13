@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #include "hardware/robot_hardware_interface.hpp"
+#include "custom_msgs/msg/pid.hpp"
 #include "hardware/config.h"
+#include "std_msgs/msg/float32_multi_array.hpp"
 
 using namespace std::chrono_literals;
 namespace hardware {
@@ -204,8 +206,8 @@ hardware::RobotHardwareInterface::write(const rclcpp::Time & /*time*/,
     r_wheel_.cmd = get_command(cfg_.right_wheel_name + "/" + "velocity");
 
     // the units for these commands are *encoder ticks per single loop*
-    float left_cmd = l_wheel_.cmd / (l_wheel_.rads_per_count) / cfg_.loop_rate;
-    float right_cmd = r_wheel_.cmd / (r_wheel_.rads_per_count) / cfg_.loop_rate;
+    left_cmd = l_wheel_.cmd / (l_wheel_.rads_per_count) / cfg_.loop_rate;
+    right_cmd = r_wheel_.cmd / (r_wheel_.rads_per_count) / cfg_.loop_rate;
 
     // Send commands to motors
     arduino_.setMotorValues(left_cmd, right_cmd);
@@ -213,21 +215,8 @@ hardware::RobotHardwareInterface::write(const rclcpp::Time & /*time*/,
     // Command new velocity for next iteration
     commandVelocity();
 
-    // Publish debug info
-    // auto message = std_msgs::msg::String();
-    // message.data = "Meow :3";
-    // debug_publisher_->publish(message);
-
-    // Publish left pwm info
-    auto left_cmd_log = std_msgs::msg::Int32();
-    left_cmd_log.data = left_cmd;
-    left_cmd_publisher_->publish(left_cmd_log);
-
-    // Publish right pwm info
-    auto right_cmd_log = std_msgs::msg::Int32();
-    right_cmd_log.data = right_cmd;
-    right_cmd_publisher_->publish(right_cmd_log);
-
+    // Publish debuf variables
+    publishDebugVariables();
     // RCLCPP_INFO(get_logger(), "left cmd %f; loop_rate %f, rads per c %f",
     //             l_wheel_.cmd, cfg_.loop_rate, l_wheel_.rads_per_count);
     return hardware_interface::return_type::OK;
@@ -257,10 +246,40 @@ void RobotHardwareInterface::commandVelocity()
                                                     telemetry_.position_x);
     float angular_input = pid_angular_.computeControl(
         wrapAngle(goal_.goal_yaw), telemetry_.orientation_yaw);
-    // TODO: publish debug
-    RCLCPP_INFO(get_logger(), "lin/ang_inp: %f/%f", linear_input,
-                angular_input);
     this->publishTwist(linear_input, angular_input);
+}
+void RobotHardwareInterface::importConfigVariables() {
+    // My specific changes
+    // Hardware specific imports
+    cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
+    cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
+    cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
+    cfg_.port = (info_.hardware_parameters["port"]);
+    cfg_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
+    cfg_.timeout = std::stoi(info_.hardware_parameters["timeout"]);
+    cfg_.enc_counts_per_rev =
+        std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
+    cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
+    cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
+    cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
+    cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
+
+    // Navigation pids specific imports
+    cfg_.linear_pid_p = std::stof(info_.hardware_parameters["linear_pid_p"]);
+    cfg_.linear_pid_i = std::stof(info_.hardware_parameters["linear_pid_i"]);
+    cfg_.linear_pid_d = std::stof(info_.hardware_parameters["linear_pid_d"]);
+    cfg_.linear_pid_max_windup =
+        std::stof(info_.hardware_parameters["linear_pid_max_windup"]);
+    cfg_.linear_pid_max_input =
+        std::stof(info_.hardware_parameters["linear_pid_max_input"]);
+
+    cfg_.angular_pid_p = std::stof(info_.hardware_parameters["angular_pid_p"]);
+    cfg_.angular_pid_i = std::stof(info_.hardware_parameters["angular_pid_i"]);
+    cfg_.angular_pid_d = std::stof(info_.hardware_parameters["angular_pid_d"]);
+    cfg_.angular_pid_max_windup =
+        std::stof(info_.hardware_parameters["angular_pid_max_windup"]);
+    cfg_.angular_pid_max_input =
+        std::stof(info_.hardware_parameters["angular_pid_max_input"]);
 }
 
 void RobotHardwareInterface::createPublishersAndSubscribers() {
@@ -300,7 +319,12 @@ void RobotHardwareInterface::createPublishersAndSubscribers() {
     };
     debug_publisher_ = get_node()->create_publisher<std_msgs::msg::String>(
         "/debug/hardware_interface", 10);
-
+    pid_linear_debug_publisher_ =
+        get_node()->create_publisher<custom_msgs::msg::Pid>("/debug/pid_linear",
+                                                            10);
+    pid_angular_debug_publisher_ =
+        get_node()->create_publisher<custom_msgs::msg::Pid>(
+            "/debug/pid_angular", 10);
     left_cmd_publisher_ = get_node()->create_publisher<std_msgs::msg::Int32>(
         "/debug/left_cmd", 10);
     right_cmd_publisher_ = get_node()->create_publisher<std_msgs::msg::Int32>(
@@ -319,38 +343,40 @@ void RobotHardwareInterface::createPublishersAndSubscribers() {
             "/diff_drive_controller/odom", 10, odom_callback_);
 };
 
-void RobotHardwareInterface::importConfigVariables() {
-    // My specific changes
-    // Hardware specific imports
-    cfg_.left_wheel_name = (info_.hardware_parameters["left_wheel_name"]);
-    cfg_.right_wheel_name = (info_.hardware_parameters["right_wheel_name"]);
-    cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
-    cfg_.port = (info_.hardware_parameters["port"]);
-    cfg_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
-    cfg_.timeout = std::stoi(info_.hardware_parameters["timeout"]);
-    cfg_.enc_counts_per_rev =
-        std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
-    cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
-    cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
-    cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
-    cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
+void RobotHardwareInterface::publishDebugVariables() {
 
-    // Navigation pids specific imports
-    cfg_.linear_pid_p = std::stof(info_.hardware_parameters["linear_pid_p"]);
-    cfg_.linear_pid_i = std::stof(info_.hardware_parameters["linear_pid_i"]);
-    cfg_.linear_pid_d = std::stof(info_.hardware_parameters["linear_pid_d"]);
-    cfg_.linear_pid_max_windup =
-        std::stof(info_.hardware_parameters["linear_pid_max_windup"]);
-    cfg_.linear_pid_max_input =
-        std::stof(info_.hardware_parameters["linear_pid_max_input"]);
+    // Publish debug info
+    // auto message = std_msgs::msg::String();
+    // message.data = "Meow :3";
+    // debug_publisher_->publish(message);
 
-    cfg_.angular_pid_p = std::stof(info_.hardware_parameters["angular_pid_p"]);
-    cfg_.angular_pid_i = std::stof(info_.hardware_parameters["angular_pid_i"]);
-    cfg_.angular_pid_d = std::stof(info_.hardware_parameters["angular_pid_d"]);
-    cfg_.angular_pid_max_windup =
-        std::stof(info_.hardware_parameters["angular_pid_max_windup"]);
-    cfg_.angular_pid_max_input =
-        std::stof(info_.hardware_parameters["angular_pid_max_input"]);
+    // Publish left pwm info
+    auto left_cmd_log = std_msgs::msg::Int32();
+    left_cmd_log.data = left_cmd;
+    left_cmd_publisher_->publish(left_cmd_log);
+
+    // Publish right pwm info
+    auto right_cmd_log = std_msgs::msg::Int32();
+    right_cmd_log.data = right_cmd;
+    right_cmd_publisher_->publish(right_cmd_log);
+
+    // // Publish linear pid info into an array
+    auto linear_pid_log = custom_msgs::msg::Pid();
+    linear_pid_log.error = pid_linear_.error;
+    linear_pid_log.derivative_error = pid_linear_.derivative_error;
+    linear_pid_log.integral_error = pid_linear_.integral_error_;
+    linear_pid_log.max_windup = pid_linear_.max_windup_;
+    linear_pid_log.control_input = pid_linear_.control_input;
+    pid_linear_debug_publisher_->publish(linear_pid_log);
+
+    // // Publish angular pid info into an array
+    auto angular_pid_log = custom_msgs::msg::Pid();
+    angular_pid_log.error = pid_angular_.error;
+    angular_pid_log.derivative_error = pid_angular_.derivative_error;
+    angular_pid_log.integral_error = pid_angular_.integral_error_;
+    angular_pid_log.max_windup = pid_angular_.max_windup_;
+    angular_pid_log.control_input = pid_angular_.control_input;
+    pid_angular_debug_publisher_->publish(angular_pid_log);
 }
 } // namespace hardware
 

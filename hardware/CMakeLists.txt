@@ -16,6 +16,7 @@ find_package(serial REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(custom_msgs REQUIRED)     
 # find_package(Eigen3 REQUIRED)
 
 include_directories(include)
@@ -39,6 +40,7 @@ ament_target_dependencies(
   serial
   geometry_msgs
   nav_msgs
+  custom_msgs
 )
 
 pluginlib_export_plugin_description_file(hardware_interface hardware_interface.xml)
@@ -72,6 +74,7 @@ ament_export_dependencies(
   rclcpp_lifecycle
   geometry_msgs
   nav_msgs
+  custom_msgs
 )
 
 ament_package()
