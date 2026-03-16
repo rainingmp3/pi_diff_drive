@@ -4,4 +4,6 @@ run.sh - run container;
 
 Main comands:
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Debug
-                               --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+ colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+Also: mv pi_diff_drive/ src/ 
