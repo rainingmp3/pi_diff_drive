@@ -27,6 +27,7 @@ typedef struct RobotTelemetry {
     float orientation_z = 0;
     float orientation_w = 0;
     float orientation_yaw = 0;
+    int accel_gyro_vector[6] = {0};
 } RobotTelemetry;
 
 inline float wrapAngle(float angle_to_wrap) {

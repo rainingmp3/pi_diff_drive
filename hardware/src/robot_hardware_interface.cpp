@@ -1,3 +1,7 @@
+// * TODO: we need imu data publisher, we already can fetch imu data;
+// - [ ] what format /imu expects?
+// - [ ] how then works sensor fusion and how to implement it?
+
 // Copyright 2021 ros2_control Development Team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
