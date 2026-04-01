@@ -1,0 +1,15 @@
+#+title: Todo
+
+
+* TODO:                                                  
+   - [ ] [[https://control.ros.org/master/doc/ros2_controllers/imu_sensor_broadcaster/doc/userdoc.html][apply imu_sensor broadcaster]] 
+     - [ ] create imu frame (maybe change imu pos?)
+   - [ ] Add quaternions to .ino
+   - [ ] Add covariances to orientation of imu
+   - [ ] Add covariances to odom
+   - [ ] Test that IMU complies with:
+     - REP-103 (Standard Units of Measure and Coordinate Conventions)
+     - REP-105 (Coordinate Frame Conventions).
+   - [X] Update .xml and CMakeLists.txt
+
+

@@ -28,18 +28,23 @@ void ArduinoComms::readEncoderValues(int &val_1, int &val_2) {
     val_1 = std::atoi(token_1.c_str());
     val_2 = std::atoi(token_2.c_str());
 }
-void ArduinoComms::readImuValues(int imu_vector[]) {
+void ArduinoComms::readImuValues(int accel_vector[], int gyro_vector) {
     std::string response = sendMsg("i\r");
     std::string delimiter = " ";
     size_t del_pos = response.find(delimiter);
     int init_index = 0;
-    int values[6]; // 3xaccel 3xgyro
 
     for (int i = 0; i < 6; i++) {
         std::string token =
             response.substr(init_index, del_pos); // get a value's string
         float value = atof(token.c_str);          // str->float
-        values[i] = value;                        // assign value to the array
+
+        if (int < 3) {
+            accel_vector[i] = value; // assign value to the array
+        } else {
+
+            gyro_vector[i - 3] = value; // assign value to the array
+        }
 
         init_index = del_pos + 1;
         del_pos = response.find(delimeter, init_index)

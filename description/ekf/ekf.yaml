@@ -1,0 +1,30 @@
+# ekf.yaml
+ekf_filter_node:
+  ros__parameters:
+    use_sim_time: true
+    frequency: 30.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    transform_time_offset: 0.0
+    transform_timeout: 0.0
+    print_diagnostics: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    odometry0: /odom
+    odometry0_config: [false,  false,  false,
+                       false, false, false,
+                       true, true, false,
+                       false, false, true,
+                       false, false, false]
+    imu0: /imu/data
+    imu0_config: [false, false, false,    # XYZ
+                  false,  false,  true,   # pitch, roll, yaw
+                  false, false, false,    # Xd, Yd, Zd
+                  false, false, true,     # pitchd, rolld, yawd
+                  true, false, false]     # Xdd, Ydd, Zdd
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true
+
+ # A Very good explanation is available on: https://docs.ros.org/en/noetic/api/robot_localization/html/configuring_robot_localization.html

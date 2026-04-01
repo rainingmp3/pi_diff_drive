@@ -6,14 +6,18 @@ from launch_ros.actions import Node
 import os
 
 def generate_launch_description():
+    # Packages
     robot_description_path = get_package_share_path('description')
     robot_bringup_path = get_package_share_path('bringup')
-    
+
+    # Pathes
     urdf_path = os.path.join(robot_description_path, 'urdf', 'robot.urdf.xacro')
     rviz_config_path = os.path.join(robot_description_path, 'rviz', 'urdf_config.rviz')
+    ekf_config_path = os.path.join(robot_description_path, 'ekf', 'ekf.yaml')
     robot_description = ParameterValue(Command(['xacro ', urdf_path]), value_type=str)
     robot_controllers = os.path.join(robot_bringup_path, 'config', 'controllers.yaml')
 
+    # Nodes
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -45,10 +49,20 @@ def generate_launch_description():
         arguments=["-d", rviz_config_path],
     )
  
+    robot_localization = Node(
+                package='robot_localization',
+                executable='ekf_node',
+                name='ekf_filter_node',
+                output='screen',
+                parameters=[ekf_config_path]
+            )
+
+    
     return LaunchDescription([
         robot_state_publisher_node,
         control_node,
         joint_state_broadcaster_spawner,
         diff_drive_controller_spawner,
         rviz_node,
+        robot_localization,
     ])

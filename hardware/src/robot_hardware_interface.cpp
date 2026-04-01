@@ -1,7 +1,3 @@
-// * TODO: we need imu data publisher, we already can fetch imu data;
-// - [ ] what format /imu expects?
-// - [ ] how then works sensor fusion and how to implement it?
-
 // Copyright 2021 ros2_control Development Team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -179,6 +175,8 @@ RobotHardwareInterface::read(const rclcpp::Time & /*time*/,
     // std::string read_log = arduino_.readSerial();
     // RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
 
+    // Read IMU values
+    arduino_.readEncoderValues(telemetry_.accel_vector, telemetry_.gyro_vector);
     // Read encoder values, calculate angle and angular velocity
     arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
     double pos_prev = l_wheel_.pos;
@@ -323,6 +321,8 @@ void RobotHardwareInterface::createPublishersAndSubscribers() {
     };
     debug_publisher_ = get_node()->create_publisher<std_msgs::msg::String>(
         "/debug/hardware_interface", 10);
+    imu_publisher_ =
+        get_node()->create_publisher<sensor_msgs::msg::Imu>("/imu/data", 10);
     pid_linear_debug_publisher_ =
         get_node()->create_publisher<custom_msgs::msg::Pid>("/debug/pid_linear",
                                                             10);
@@ -353,6 +353,45 @@ void RobotHardwareInterface::publishDebugVariables() {
     // auto message = std_msgs::msg::String();
     // message.data = "Meow :3";
     // debug_publisher_->publish(message);
+
+    // Publish IMU data;
+    // Create Vector3's of ROS2
+    auto imu_accel = geometry_msgs::msg::Vector3();
+    auto imu_gyro = geometry_msgs::msg::Vector3();
+    imu_accel.x = telemetry_.accel_vector[0];
+    imu_accel.y = telemetry_.accel_vector[1];
+    imu_accel.z = telemetry_.accel_vector[2];
+
+    imu_gyro.x = telemetry_.gyro_vector[0];
+    imu_gyro.y = telemetry_.gyro_vector[1];
+    imu_gyro.z = telemetry_.gyro_vector[2];
+
+    // Populate the values
+    // Covariance
+    // Row major about x, y, z axes
+    //
+    // TODO:
+    //     add orientation in .ino and publish it there
+    imu_log.orientation_covariation = {
+        -1, 0, 0, 0, 0,
+        0,  0, 0, 0}; // disable orientation input, NOTE: ?float64?
+    float64 linear_accelaration_covariance[9] = {0.0f};
+    float64 angular_velocity_covariance[9] = {0.0f};
+
+    //  TODO :
+    //     populate covariance diagonal terms after getting orientation done
+    linear_accelaration_covariance[6] = 0.1; // Should be Xdd
+    angular_velocity_covariance[2] = 0.1;    // Should be yaw
+    angular_velocity_covariance[5] = 0.1;
+    // linear_accelaration_covariance[8] = 0.1;
+    imu_log.linear_accelaration_covariance = imu_accel;
+    imu_log.angular_velocity_covariance = imu_gyro;
+    // Values
+    imu_log.linear_accelaration = imu_accel;
+    imu_log.angular_velocity = imu_gyro;
+
+    // orientation input
+    left_cmd_publisher_->publish(left_cmd_log);
 
     // Publish left pwm info
     auto left_cmd_log = std_msgs::msg::Int32();

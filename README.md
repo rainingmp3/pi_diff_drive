@@ -12,6 +12,7 @@ https://github.com/user-attachments/assets/924af53b-e3f5-4206-837a-2c466155e987
 - L298N motor driver
 - IR encoders
 - 4× AA batteries
+- MPU6050 IMU
  
 ## Challenges
 Getting ros2_control working on real hardware is notoriously difficult:
