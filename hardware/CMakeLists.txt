@@ -40,6 +40,7 @@ ament_target_dependencies(
   serial
   geometry_msgs
   nav_msgs
+  sensor_msgs
   custom_msgs
 )
 
@@ -74,6 +75,7 @@ ament_export_dependencies(
   rclcpp_lifecycle
   geometry_msgs
   nav_msgs
+  sensor_msgs
   custom_msgs
 )
 
