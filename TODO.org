@@ -2,8 +2,10 @@
 
 
 * TODO:                                                  
-   - [ ] [[https://control.ros.org/master/doc/ros2_controllers/imu_sensor_broadcaster/doc/userdoc.html][apply imu_sensor broadcaster]] 
+   - [-] [[https://control.ros.org/master/doc/ros2_controllers/imu_sensor_broadcaster/doc/userdoc.html][apply imu_sensor broadcaster]] [[][]]
+     - [X] re-write xacro
      - [ ] create imu frame (maybe change imu pos?)
+     - [ ] add node
    - [ ] Add quaternions to .ino
    - [ ] Add covariances to orientation of imu
    - [ ] Add covariances to odom

@@ -15,7 +15,6 @@
 #include "hardware/robot_hardware_interface.hpp"
 #include "custom_msgs/msg/pid.hpp"
 #include "hardware/config.h"
-#include "std_msgs/msg/float32_multi_array.hpp"
 
 using namespace std::chrono_literals;
 namespace hardware {
@@ -176,7 +175,7 @@ RobotHardwareInterface::read(const rclcpp::Time & /*time*/,
     // RCLCPP_WARN(get_logger(), "read: %s", read_log.c_str());
 
     // Read IMU values
-    arduino_.readEncoderValues(telemetry_.accel_vector, telemetry_.gyro_vector);
+    arduino_.readImuValues(telemetry_.imu_values);
     // Read encoder values, calculate angle and angular velocity
     arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
     double pos_prev = l_wheel_.pos;
@@ -354,44 +353,39 @@ void RobotHardwareInterface::publishDebugVariables() {
     // message.data = "Meow :3";
     // debug_publisher_->publish(message);
 
-    // Publish IMU data;
-    // Create Vector3's of ROS2
+    // --- Publish IMU data;
+    auto imu_log = sensor_msgs::msg::Imu();
     auto imu_accel = geometry_msgs::msg::Vector3();
     auto imu_gyro = geometry_msgs::msg::Vector3();
-    imu_accel.x = telemetry_.accel_vector[0];
-    imu_accel.y = telemetry_.accel_vector[1];
-    imu_accel.z = telemetry_.accel_vector[2];
+    auto imu_orientation = geometry_msgs::msg::Quaternion();
 
-    imu_gyro.x = telemetry_.gyro_vector[0];
-    imu_gyro.y = telemetry_.gyro_vector[1];
-    imu_gyro.z = telemetry_.gyro_vector[2];
+    imu_accel.x = telemetry_.imu_values[0];
+    imu_accel.y = telemetry_.imu_values[1];
+    imu_accel.z = telemetry_.imu_values[2];
+
+    imu_gyro.x = telemetry_.imu_values[3];
+    imu_gyro.y = telemetry_.imu_values[4];
+    imu_gyro.z = telemetry_.imu_values[5];
+
+    imu_orientation.w = telemetry_.imu_values[6];
+    imu_orientation.x = telemetry_.imu_values[7];
+    imu_orientation.y = telemetry_.imu_values[8];
+    imu_orientation.z = telemetry_.imu_values[9];
 
     // Populate the values
     // Covariance
     // Row major about x, y, z axes
-    //
-    // TODO:
-    //     add orientation in .ino and publish it there
-    imu_log.orientation_covariation = {
-        -1, 0, 0, 0, 0,
-        0,  0, 0, 0}; // disable orientation input, NOTE: ?float64?
-    float64 linear_accelaration_covariance[9] = {0.0f};
-    float64 angular_velocity_covariance[9] = {0.0f};
+    imu_log.orientation_covariance = {
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0.1}; // as in ekf.yaml only this one is relevant
 
-    //  TODO :
-    //     populate covariance diagonal terms after getting orientation done
-    linear_accelaration_covariance[6] = 0.1; // Should be Xdd
-    angular_velocity_covariance[2] = 0.1;    // Should be yaw
-    angular_velocity_covariance[5] = 0.1;
-    // linear_accelaration_covariance[8] = 0.1;
-    imu_log.linear_accelaration_covariance = imu_accel;
-    imu_log.angular_velocity_covariance = imu_gyro;
-    // Values
-    imu_log.linear_accelaration = imu_accel;
+    // We can keep them empty as they are getting overwritten by imu_sensor_broadcaster anyway
+    imu_log.linear_acceleration_covariance = {0};
+    imu_log.angular_velocity_covariance = {0};
+    imu_log.orientation = imu_orientation;
+    imu_log.linear_acceleration = imu_accel;
     imu_log.angular_velocity = imu_gyro;
-
-    // orientation input
-    left_cmd_publisher_->publish(left_cmd_log);
+    imu_publisher_->publish(imu_log);
 
     // Publish left pwm info
     auto left_cmd_log = std_msgs::msg::Int32();

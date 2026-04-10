@@ -2,6 +2,8 @@
 #define SETPOINT_FOLLOWING__H
 
 #include <cmath>
+#include <vector>
+
 const float PI = 3.14159265359;
 namespace hardware {
 
@@ -27,7 +29,7 @@ typedef struct RobotTelemetry {
     float orientation_z = 0;
     float orientation_w = 0;
     float orientation_yaw = 0;
-    int accel_gyro_vector[6] = {0};
+    std::vector<float> imu_values = {0};
 } RobotTelemetry;
 
 inline float wrapAngle(float angle_to_wrap) {

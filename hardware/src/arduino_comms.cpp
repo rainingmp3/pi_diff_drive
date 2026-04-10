@@ -28,28 +28,39 @@ void ArduinoComms::readEncoderValues(int &val_1, int &val_2) {
     val_1 = std::atoi(token_1.c_str());
     val_2 = std::atoi(token_2.c_str());
 }
-void ArduinoComms::readImuValues(int accel_vector[], int gyro_vector[]) {
+std::vector<float> ArduinoComms::splitStringValues(std::string &string_values){
+   std::vector<float> values;
+   std::stringstream iss(string_values);
+   std::string token;
+
+   while (iss >> token){
+       try {
+           values.push_back(std::stof(token));
+       }    catch (...){}
+   }
+
+   return values;
+};
+
+void ArduinoComms::readImuValues(std::vector<float> &values) {
     std::string response = sendMsg("i\r");
-    std::string delimiter = " ";
-    size_t del_pos = response.find(delimiter);
-    int init_index = 0;
 
-    for (int i = 0; i < 6; i++) {
-        std::string token =
-            response.substr(init_index, del_pos); // get a value's string
-        float value = atof(token.c_str());          // str->float
+    size_t index_aworld = response.find("aworld"); // acceleration values
+    size_t index_ggworld= response.find("ggworld"); // gyro values
 
-        if (i < 3) {
-            accel_vector[i] = value; // assign value to the array
-        } else {
+    std::string quat_string = response.substr(0, index_aworld);
+    std::string aworld_string = response.substr(index_aworld, index_ggworld - index_aworld);
+    std::string ggworld_string = response.substr(index_ggworld);
 
-            gyro_vector[i - 3] = value; // assign value to the array
-        }
+    std::vector<float> quat_values = splitStringValues(quat_string);
+    std::vector<float> aworld_values = splitStringValues(aworld_string);
+    std::vector<float> ggworld_values = splitStringValues(ggworld_string);
 
-        init_index = del_pos + 1;
-        del_pos = response.find(delimiter, init_index);
+    values.insert(values.end(), quat_values.begin(), quat_values.end());
+    values.insert(values.end(), aworld_values.begin(), aworld_values.end());
+    values.insert(values.end(), ggworld_values.begin(), ggworld_values.end());
     }
-}
+
 
 std::string ArduinoComms::readSerial() {
     if (serial_conn_.available()) {

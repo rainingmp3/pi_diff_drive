@@ -29,11 +29,11 @@
 #include "custom_msgs/msg/pid.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
+#include "geometry_msgs/msg/quaternion.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "pid.h"
-#include "sensor_msgs/msg/Imu.msg"
+#include "sensor_msgs/msg/imu.hpp"
 #include "setpoint_following.h"
-#include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "wheel.h"
@@ -74,7 +74,7 @@ class RobotHardwareInterface : public hardware_interface::SystemInterface {
 
   private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr debug_publisher_;
-    rclcpp::Publisher<sensor_msg::msg::Imu>::SharedPtr imu_publisher_;
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_cmd_publisher_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_cmd_publisher_;
     rclcpp::Publisher<custom_msgs::msg::Pid>::SharedPtr
